@@ -932,20 +932,21 @@
             lucide.createIcons();
         });
 
-        // Cargar vehículos desde localStorage
-        function loadVehiclesFromStorage() {
+        // Cargar vehículos directamente desde el archivo JSON en el repositorio
+        async function loadVehiclesFromStorage() {
             try {
-                const saved = localStorage.getItem(STORAGE_KEY_VEHICLES);
-                if (saved) {
-                    vehicles = JSON.parse(saved);
-                } else {
-                    vehicles = [...SAMPLE_VEHICLES];
-                    saveVehiclesToStorage();
-                }
+                const response = await fetch('./forajidos_rp_catalogo_2026-11-14.json?v=' + Date.now());
+                if (!response.ok) throw new Error('No se pudo leer el JSON');
+                const data = await response.json();
+                vehicles = Array.isArray(data) ? data : (data.vehicles || [...SAMPLE_VEHICLES]);
+                saveVehiclesToStorage();
             } catch (err) {
-                console.error('Error cargando catálogo:', err);
-                vehicles = [...SAMPLE_VEHICLES];
+                console.warn('Cargando respaldo local o de muestra:', err);
+                const saved = localStorage.getItem(STORAGE_KEY_VEHICLES);
+                vehicles = saved ? JSON.parse(saved) : [...SAMPLE_VEHICLES];
             }
+            if (typeof renderVehicles === 'function') renderVehicles();
+            if (typeof filterAndRender === 'function') filterAndRender();
         }
 
         function saveVehiclesToStorage() {
